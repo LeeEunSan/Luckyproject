@@ -23,5 +23,4 @@ public class HeroData : ScriptableObject
 
     [Header("프리팹")]
     public GameObject prefab; //영웅모델
-    public int Cost; //비용.
 }
