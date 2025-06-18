@@ -1,17 +1,19 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class HeroController : MonoBehaviour
 {
-    public HeroType   HeroType  { get; private set; }
-    public HeroRarity Rarity    { get; private set; }
-    public int        Count     { get; private set; } = 0;  // 1~3 활성화 단계
+    public HeroData Data { get; private set; }
+    public HeroType HeroType => Data.heroType;
+    public HeroRarity Rarity => Data.rarity;
+
+    public int Count { get; private set; } = 0;  // 1~3 활성화 단계
 
     // 초기 세팅
     public void Initialize(HeroData data)
     {
-        HeroType = data.heroType;
-        Rarity   = data.rarity;
-        Count    = 1;
+        Data = data;
+        Count = 1;
         UpdateVisuals();
     }
 
@@ -29,6 +31,19 @@ public class HeroController : MonoBehaviour
         for (int i = 0; i < transform.childCount; i++)
         {
             transform.GetChild(i).gameObject.SetActive(i < Count);
+        }
+    }
+
+    public void EnemyAttack()
+    {
+
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Enemy")
+        {
+            
         }
     }
 }
