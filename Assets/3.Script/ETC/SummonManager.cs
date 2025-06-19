@@ -35,7 +35,12 @@ public class SummonManager : MonoBehaviour
         // 빈 칸(slot.childCount == 0)이 하나도 없거나
         // 이미 총 소환 횟수가 max를 넘으면 중단
         if (slots.All(s => s.childCount > 0)) return;
-        if (totalSummoned >= maxTotalHeroes) return;
+        if (totalSummoned >= maxTotalHeroes)
+        {
+            UIManager.Instance.SpawnedMax();
+            //UIManager.Instance.SpawnedMax_1();
+            return;
+        }
 
         // 1) 랜덤 등급 결정
         float r = Random.value * 100f;
@@ -44,6 +49,8 @@ public class SummonManager : MonoBehaviour
             r <= pCommon + pRare ? HeroRarity.Rare :
             r <= pCommon + pRare + pEpic ? HeroRarity.Epic :
             HeroRarity.Legendary;
+
+              
 
         // 2) 해당 등급 HeroData 풀에서 랜덤 선택
         var pool = heroDatas.Where(d => d.rarity == chosenRarity).ToArray();

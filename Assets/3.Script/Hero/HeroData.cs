@@ -5,7 +5,8 @@ public enum HeroRarity
     Common,
     Rare,
     Epic,
-    Legendary
+    Legendary,
+    Mythic
 }
 
 public enum HeroType
@@ -17,9 +18,9 @@ public enum HeroType
 [CreateAssetMenu(menuName = "Hero System/Hero Data", fileName = "NewHeroData")]
 public class HeroData : ScriptableObject
 {
-    public string     HeroName;
+    public string HeroName;
     public HeroRarity rarity;
-    public HeroType   heroType;      // ← 추가
+    public HeroType heroType;      // ← 추가
 
     [Header("스탯")]
     public float damage;

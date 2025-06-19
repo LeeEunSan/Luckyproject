@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class WaveManager : MonoBehaviour
 {
@@ -23,10 +24,11 @@ public class WaveManager : MonoBehaviour
         // 첫 웨이브 시작
         StartCoroutine(SpawnWave(waves[currentWaveIndex]));
         UIManager.Instance.UpdateWave(NextWave);
+        //UIManager.Instance.CoinInfo(Coin);
     }
 
     private IEnumerator SpawnWave(WaveData wave)
-    {
+    {        
         for (int i = 0; i < wave.count; i++)
         {
             // 스폰

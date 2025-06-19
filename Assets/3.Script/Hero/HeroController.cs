@@ -9,6 +9,11 @@ public class HeroController : MonoBehaviour
 
     public int Count { get; private set; } = 0;  // 1~3 활성화 단계
 
+    public void Update()
+    {
+        CharacterMove();       
+    }
+
     // 초기 세팅
     public void Initialize(HeroData data)
     {
@@ -25,6 +30,14 @@ public class HeroController : MonoBehaviour
         UpdateVisuals();
     }
 
+    // 조합 등으로 캐릭터 하나를 소모할 때 호출합니다.
+    public void DecreaseCount()
+    {
+        if (Count <= 0) return;
+        Count--;
+        UpdateVisuals();
+    }
+
     // 자식 오브젝트(모델) 활성화/비활성화 관리
     private void UpdateVisuals()
     {
@@ -34,16 +47,12 @@ public class HeroController : MonoBehaviour
         }
     }
 
-    public void EnemyAttack()
+    public void CharacterMove()
     {
-
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.tag == "Enemy")
+        if (Input.GetMouseButtonDown(1))
         {
             
+            Debug.Log($"클릭{this}");
         }
     }
 }
