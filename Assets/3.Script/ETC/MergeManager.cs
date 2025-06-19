@@ -21,78 +21,85 @@ public class MergeManager : MonoBehaviour
     public void MergeSlot(HeroSlot slot)
     {
         var oldHero = slot.CurrentHero;
-    if (oldHero == null || oldHero.Count < 3)
-        return;
+        if (oldHero == null || oldHero.Count < 3)
+            return;
 
-    // ── (A) 인구 -2 처리 ───────────────────────
-    SummonManager.Instance.ChangePopulation(-2);
+        // 1) 병합 전 인구 변경
+        SummonManager.Instance.ChangePopulation(-2);
 
-    // ── (B) 기존 컨테이너(3개 모델) 삭제 ─────────
-    slot.ClearHero();
+        // 2) 원래 슬롯 비우기
+        slot.ClearHero();
 
-    // ── (C) 다음 등급 결정 & 신화 분기 ────────────
-    HeroRarity nextRarity;
-    if (oldHero.Rarity == HeroRarity.Legendary)
-    {
-        SpawnMythic(slot, oldHero.HeroType);
-        return;
-    }
-    else
-    {
+        // 3) 다음 등급 결정
+        HeroRarity nextRarity;
+        if (oldHero.Rarity == HeroRarity.Legendary)
+        {
+            SpawnMythic(slot, oldHero.HeroType);
+            return;
+        }
         nextRarity = (HeroRarity)((int)oldHero.Rarity + 1);
-    }
 
-    // ── (D) 새 등급 랜덤 Instantiate ─────────────
-    var candidates = heroDatas
-        .Where(d => d.rarity == nextRarity && d.heroType == oldHero.HeroType)
-        .ToArray();
+        // 4) 후보 풀에서 랜덤 선택
+        var candidates = heroDatas
+            .Where(d => d.rarity == nextRarity && d.heroType == oldHero.HeroType)
+            .ToArray();
+        if (candidates.Length == 0)
+        {
+            Debug.LogWarning($"[{nextRarity}] 매칭되는 HeroData 없음");
+            return;
+        }
+        var newData = candidates[Random.Range(0, candidates.Length)];
 
-    var newData = candidates[Random.Range(0, candidates.Length)];
-    var go = Instantiate(
-        newData.prefab,
-        slot.SpawnPoint.position,
-        Quaternion.identity,
-        slot.SpawnPoint
-    );
+        // ★ 5) “같은 newData”가 있는 곳 먼저 찾아 뭉치기
+        var existingSlot = slots
+            .Select(s => s.GetComponent<HeroSlot>())
+            .FirstOrDefault(hs =>
+                hs.CurrentHero != null &&
+                hs.CurrentHero.Data == newData &&   // 정확히 같은 SO
+                hs.CurrentHero.Count < 3
+            );
+        if (existingSlot != null)
+        {
+            existingSlot.CurrentHero.IncreaseCount();
+            existingSlot.UpdateMergeButtonVisibility();
+            return;
+        }
 
-    var newHero = go.GetComponent<HeroController>();
-    newHero.Initialize(newData);
-    slot.SetHero(newHero);
+        // 6) 없다면 원래 자리(slot)에 새로 생성
+        var go = Instantiate(
+            newData.prefab,
+            slot.SpawnPoint.position,
+            Quaternion.identity,
+            slot.SpawnPoint
+        );
+
+        var newHero = go.GetComponent<HeroController>();
+        newHero.Initialize(newData);
+        slot.SetHero(newHero);
 
         // var oldHero = slot.CurrentHero;
         // if (oldHero == null || oldHero.Count < 3)
         //     return;
 
-        // // 1) 기존 컨테이너 삭제
+        // // ── (A) 인구 -2 처리 ───────────────────────
+        // SummonManager.Instance.ChangePopulation(-2);
+
+        // // ── (B) 기존 컨테이너(3개 모델) 삭제 ─────────
         // slot.ClearHero();
 
-        // // 2) 다음 등급 결정
+        // // ── (C) 다음 등급 결정 & 신화 분기 ────────────
         // HeroRarity nextRarity;
         // if (oldHero.Rarity == HeroRarity.Legendary)
         // {
         //     SpawnMythic(slot, oldHero.HeroType);
         //     return;
         // }
-        // nextRarity = (HeroRarity)((int)oldHero.Rarity + 1);
-
-        // // 3) 같은 heroType & nextRarity 인스턴스 중 Count<3 인 게 있는지 검색
-        // foreach (var s in slots)
+        // else
         // {
-        //     var hs = s.GetComponent<HeroSlot>();
-        //     var hc = hs.CurrentHero;
-        //     if (hc != null
-        //         && hc.HeroType == oldHero.HeroType
-        //         && hc.Rarity == nextRarity
-        //         && hc.Count < 3)
-        //     {
-        //         // 이미 존재하는 컨테이너에 뭉치기
-        //         hc.IncreaseCount();
-        //         hs.UpdateMergeButtonVisibility();
-        //         return;
-        //     }
+        //     nextRarity = (HeroRarity)((int)oldHero.Rarity + 1);
         // }
 
-        // // 4) 없으면 새로 소환 (기존 코드)
+        // // ── (D) 새 등급 랜덤 Instantiate ─────────────
         // var candidates = heroDatas
         //     .Where(d => d.rarity == nextRarity && d.heroType == oldHero.HeroType)
         //     .ToArray();
