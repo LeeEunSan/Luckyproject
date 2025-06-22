@@ -50,7 +50,7 @@ public class SummonManager : MonoBehaviour
             r <= pCommon + pRare + pEpic ? HeroRarity.Epic :
             HeroRarity.Legendary;
 
-              
+
 
         // 2) 해당 등급 HeroData 풀에서 랜덤 선택
         var pool = heroDatas.Where(d => d.rarity == chosenRarity).ToArray();
@@ -89,6 +89,9 @@ public class SummonManager : MonoBehaviour
             empty
         );
 
+        var attackCtrl = go.GetComponent<HeroAttackController>();
+        attackCtrl.Initialize(data);
+
         // 초기화 후 슬롯에 세팅
         var ctrl = go.GetComponent<HeroController>();
         ctrl.Initialize(data);
@@ -97,7 +100,7 @@ public class SummonManager : MonoBehaviour
         totalSummoned++;
         UIManager.Instance.HeroMaxCount(totalSummoned, maxTotalHeroes);
     }
-    
+
     // 인구(현재 필드에 남아 있는 영웅 수)를 delta만큼 조정합니다.
     public void ChangePopulation(int delta)
     {

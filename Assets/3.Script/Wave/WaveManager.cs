@@ -1,62 +1,168 @@
 using System.Collections;
+using MoreMountains.Feedbacks;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class WaveManager : MonoBehaviour
 {
-    [Header("웨이브 목록")]
-    public WaveData[] waves;        // ScriptableObject로 만든 웨이브들
+    [Header("웨이브 데이터")]
+    public WaveData[] waves;
+    public Transform spawnPoint;
+    
+    [Header("웨이브 설정")]
+    public int maxSpawnPerWave = 20;
+    public float waveDuration = 20f;
+    public float nextWaveWarningTime = 5f;
+
     private int currentWaveIndex = 0;
-    private int NextWaveInterval = 0;
-    private int NextWave = 1;
-    private int currentSpawned;
+    private int totalSpawnedCount = 0; // 전체 누적 스폰 카운트
 
-    [Header("스폰 위치 참조")]
-    public Transform spawnPoint;    // EnemySpawner 대신 WaveManager에서 직접 스폰
+    public MMF_Player CountImage;
 
-    void Start()
+    private void Start()
     {
+        // 초기 데이터 검증
         if (waves == null || waves.Length == 0)
         {
-            Debug.LogError("웨이브 데이터가 설정되지 않았습니다!");
+            Debug.LogError("[WaveManager] 웨이브 데이터가 없습니다!");
             return;
         }
-        // 첫 웨이브 시작
-        StartCoroutine(SpawnWave(waves[currentWaveIndex]));
-        UIManager.Instance.UpdateWave(NextWave);
-        //UIManager.Instance.CoinInfo(Coin);
-    }
 
-    private IEnumerator SpawnWave(WaveData wave)
-    {        
-        for (int i = 0; i < wave.count; i++)
+        if (UIManager.Instance == null)
         {
-            // 스폰
-            Instantiate(wave.enemyPrefab, spawnPoint.position, spawnPoint.rotation);
-            // Feel UI로 스폰 카운트 갱신
-            //Feel.UI.SetText("SpawnCountText", $"{i+1}/{wave.count}");
-            currentSpawned++;
-            UIManager.Instance.UpdateSpawnCount(currentSpawned, 100);
-            yield return new WaitForSeconds(wave.spawnInterval);
+            Debug.LogError("[WaveManager] UIManager가 없습니다!");
+            return;
         }
 
-        // 이번 웨이브 끝
-        currentWaveIndex++;
+        // 첫 웨이브 UI 초기화
+        UIManager.Instance.UpdateWave(currentWaveIndex + 1);
+        UIManager.Instance.UpdateSpawnCount(totalSpawnedCount);
+        StartCoroutine(RunWaves());
+    }
 
-        if (currentWaveIndex < waves.Length)
+    private IEnumerator RunWaves()
+    {
+        while (currentWaveIndex < waves.Length)
         {
-            // 다음 웨이브로 이어서 스폰
-            yield return new WaitForSeconds(2f); // 짧은 텀
-            StartCoroutine(SpawnWave(waves[currentWaveIndex]));
-            NextWave++;
-            UIManager.Instance.UpdateWave(NextWave);
+            yield return StartCoroutine(RunSingleWave());
+            currentWaveIndex++;
+        }
+
+        // 모든 웨이브 완료 - 게임 클리어 처리
+        Debug.Log("[WaveManager] 모든 웨이브 완료!");
+        OnAllWavesComplete();
+    }
+
+    private IEnumerator RunSingleWave()
+    {
+        // 웨이브 시작 설정
+        UIManager.Instance.UpdateWave(currentWaveIndex + 1);
+        
+        float waveStartTime = Time.time;
+        int waveSpawnCount = 0; // 현재 웨이브에서 스폰된 수
+        float nextSpawnTime = Time.time;
+        float spawnInterval = waves[currentWaveIndex].spawnInterval;
+        
+        bool isWarningShown = false;
+        bool allMonstersSpawned = false;
+
+        // 웨이브는 무조건 20초 동안 진행
+        while (Time.time - waveStartTime < waveDuration)
+        {
+            float elapsedTime = Time.time - waveStartTime;
+            float remainingTime = waveDuration - elapsedTime;
+            int remainingSec = Mathf.CeilToInt(remainingTime);
+
+            // 남은 시간 UI 업데이트 (매 프레임)
+            UIManager.Instance.WaveTime(remainingSec);
+
+            // 5초 이하일 때 카운트다운 표시
+            if (remainingTime <= nextWaveWarningTime)
+            {
+                UIManager.Instance.NextWaveCD(remainingSec);
+                
+                // 경고 효과는 한 번만 실행
+                if (!isWarningShown)
+                {
+                    CountImage.PlayFeedbacks(); // 주석 해제 시 사용
+                    isWarningShown = true;
+                }
+            }
+
+            // 몬스터 스폰 타이밍 체크 (20마리 미만일 때만)
+            if (!allMonstersSpawned && Time.time >= nextSpawnTime && waveSpawnCount < maxSpawnPerWave)
+            {
+                SpawnOneEnemy(waves[currentWaveIndex]);
+                waveSpawnCount++;
+                totalSpawnedCount++;
+                
+                // UI 업데이트 (전체 누적 카운트)
+                UIManager.Instance.UpdateSpawnCount(totalSpawnedCount);
+                
+                // 20마리 다 스폰되었는지 체크
+                if (waveSpawnCount >= maxSpawnPerWave)
+                {
+                    allMonstersSpawned = true;
+                    Debug.Log($"[WaveManager] 웨이브 {currentWaveIndex + 1} - 20마리 스폰 완료. 웨이브 시간 종료 대기 중...");
+                }
+                else
+                {
+                    // 다음 스폰 시간 설정
+                    nextSpawnTime = Time.time + spawnInterval;
+                }
+            }
+
+            yield return null; // 매 프레임마다 실행
+        }
+
+        // 웨이브 완료 로그
+        Debug.Log($"[WaveManager] 웨이브 {currentWaveIndex + 1} 완료 - 스폰: {waveSpawnCount}마리, 총 누적: {totalSpawnedCount}마리");
+    }
+
+    private void SpawnOneEnemy(WaveData wave)
+    {
+        if (wave.enemyPrefab == null)
+        {
+            Debug.LogError($"[WaveManager] 웨이브 {currentWaveIndex + 1}의 enemyPrefab이 null입니다!");
+            return;
+        }
+
+        var go = Instantiate(wave.enemyPrefab, spawnPoint.position, Quaternion.identity);
+        go.tag = "Enemy";
+
+        var ctrl = go.GetComponent<EnemyController>();
+        if (ctrl != null)
+        {
+            ctrl.Initialize(wave.enemyData);
         }
         else
         {
-            // 모든 웨이브 클리어
-            GameManager.Instance.GameOver("모든 웨이브 클리어");
+            Debug.LogError("[WaveManager] EnemyController가 없습니다!");
         }
     }
+
+    private void OnAllWavesComplete()
+    {
+        // 게임 클리어 처리
+        // 예: 승리 UI 표시, 보상 지급 등
+        Debug.Log("게임 클리어!");
+        
+        // 필요 시 추가 처리
+        // UIManager.Instance.ShowGameClearUI();
+        // GameManager.Instance.OnGameClear();
+    }
+
+    // 디버그용 메서드들
+    private void OnGUI()
+    {
+        if (Application.isPlaying)
+        {
+            GUI.Label(new Rect(10, 10, 200, 20), $"현재 웨이브: {currentWaveIndex + 1}/{waves.Length}");
+            GUI.Label(new Rect(10, 30, 200, 20), $"총 스폰 수: {totalSpawnedCount}");
+        }
+    }
+
+    // 외부에서 현재 상태 확인용
+    public int GetCurrentWave() => currentWaveIndex + 1;
+    public int GetTotalSpawnCount() => totalSpawnedCount;
+    public bool IsAllWavesComplete() => currentWaveIndex >= waves.Length;
 }
-
-
