@@ -10,12 +10,12 @@ public class HeroAttackController : MonoBehaviour
 
     // 소환 직후, SummonManager 또는 HeroSlot.SetHero()에서 호출하세요.
     public void Initialize(HeroData data)
-{
-    Data = data;
-    // 컨테이너 루트의 Animator가 아니라…
-    animator = GetComponentInChildren<Animator>();  
-    attackTimer = 0f;
-}
+    {
+        Data = data;
+        // 컨테이너 루트의 Animator가 아니라…
+        animator = GetComponentInChildren<Animator>();
+        attackTimer = 0f;
+    }
 
     private void Update()
     {
@@ -39,7 +39,7 @@ public class HeroAttackController : MonoBehaviour
         // 2. "Enemy" 태그만 필터, 가장 가까운 대상 찾기
         Transform closest = null;
         float minDist = float.MaxValue;
-        Collider2D closestHit  = null;
+        Collider2D closestHit = null;
 
         foreach (var c in hits)
         {
@@ -47,8 +47,8 @@ public class HeroAttackController : MonoBehaviour
             float d = (c.transform.position - transform.position).sqrMagnitude;
             if (d < minDist)
             {
-                minDist    = d;
-                closest    = c.transform;
+                minDist = d;
+                closest = c.transform;
                 closestHit = c;
             }
         }

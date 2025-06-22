@@ -45,13 +45,13 @@ public class UIManager : MonoBehaviour
     }
 
     // 스폰 카운트를 업데이트합니다.
-    public void UpdateSpawnCount(int current)
+    public void UpdateAliveCount(int aliveCount)
     {
         int max = 100;
         if (spawnCountText != null)
-            spawnCountText.text = $"{current} / {max}";
+            spawnCountText.text = $"{aliveCount} / {max}";
         if (spawnSlider != null)
-            spawnSlider.value = current;
+            spawnSlider.value = aliveCount;
     }
     
     // 현재 웨이브 시간

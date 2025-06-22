@@ -7,8 +7,8 @@ public class HeroSlot : MonoBehaviour
     public Transform SpawnPoint => spawnPoint;
 
     public HeroController CurrentHero { get; private set; }
-    public Button mergeButton;
-    public Canvas canvas;
+    [SerializeField] private Button mergeButton;
+    [SerializeField] private Canvas canvas;
 
     //SummonManager가 Instantiate한 뒤 호출
     public void SetHero(HeroController hero)
