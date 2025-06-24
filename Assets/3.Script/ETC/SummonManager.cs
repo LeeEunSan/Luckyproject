@@ -38,7 +38,6 @@ public class SummonManager : MonoBehaviour
         if (totalSummoned >= maxTotalHeroes)
         {
             UIManager.Instance.SpawnedMax();
-            //UIManager.Instance.SpawnedMax_1();
             return;
         }
 

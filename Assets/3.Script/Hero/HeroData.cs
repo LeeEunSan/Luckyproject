@@ -1,4 +1,5 @@
- using UnityEngine;
+using Microsoft.Unity.VisualStudio.Editor;
+using UnityEngine;
 
 public enum HeroRarity
 {
@@ -15,10 +16,23 @@ public enum HeroType
     Ranged   // 원거리
 }
 
+public enum HeroSkillType
+{
+    Passive,
+    Skill
+}
+
 [CreateAssetMenu(menuName = "Hero System/Hero Data", fileName = "NewHeroData")]
 public class HeroData : ScriptableObject
 {
-    public string HeroName;
+    [Header("영웅 정보")]
+    public Sprite Hero_Image;
+    public string Hero_Name;
+    public string Tribe;
+    public string Skill_Name;
+    public HeroSkillType hero_SkillType;
+    public string Skill_Info;
+
     public HeroRarity rarity;
     public HeroType heroType;      // ← 추가
 
@@ -26,11 +40,7 @@ public class HeroData : ScriptableObject
     public float damage;
     public float attackSpeed;
     public float range;
-    public string passive;
-    public string Skill;
 
     [Header("프리팹")]
-    // 이 프리팹은 “컨테이너” 형식이어야 합니다.
-    // 내부에 child 3개(각 hero 모델)가 있고, 활성화 단계는 HeroController가 관리
     public GameObject prefab;
 }

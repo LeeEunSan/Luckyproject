@@ -52,12 +52,12 @@ public class HeroSlot : MonoBehaviour
         // 위치 검증 및 보정 (허용 오차 0.1f)
         if (Vector3.Distance(hero.transform.position, targetWorldPos) > 0.1f)
         {
-            Debug.LogWarning($"영웅 위치 보정: {hero.name} in {gameObject.name}");
+//            Debug.LogWarning($"영웅 위치 보정: {hero.name} in {gameObject.name}");
             hero.transform.position = targetWorldPos;
         }
         
         // 추가 검증용 로그
-        Debug.Log($"영웅 배치 완료: {hero.name} -> {gameObject.name} (World: {hero.transform.position}, Local: {hero.transform.localPosition})");
+//        Debug.Log($"영웅 배치 완료: {hero.name} -> {gameObject.name} (World: {hero.transform.position}, Local: {hero.transform.localPosition})");
     }
 
     // 현재 Count에 따라 Merge 버튼 보이기/숨기기

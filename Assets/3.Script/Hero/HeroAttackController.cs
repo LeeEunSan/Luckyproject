@@ -10,12 +10,18 @@ public class HeroAttackController : MonoBehaviour
     private Animator animator;
 
     [Header("UI")]
-    [SerializeField] private GameObject uiCanvas;       // 캔버스 전체
-    [SerializeField] private SpriteRenderer rangeSprite;           // 캔버스 하위의 사거리 이미지 (Scale 동기화용)
-    [SerializeField] private Button combineButton;       // 합성 버튼
-    [SerializeField] private Button deleteButton;        // 삭제 버튼
+    [SerializeField] private GameObject uiCanvas; // 캔버스 전체
+    [SerializeField] private SpriteRenderer rangeSprite; // 캔버스 하위의 사거리 이미지 (Scale 동기화용)
+    //[SerializeField] private Button combineButton; // 합성 버튼
+    [SerializeField] private Button deleteButton; // 삭제 버튼
 
-    // 소환 직후, SummonManager 또는 HeroSlot.SetHero()에서 호출하세요.
+    [Header("Range Sprite 설정")]
+    [SerializeField, Tooltip("Range 스프라이트의 기본 반지름 (월드 단위)")]
+    private float rangeSpriteBaseRadius = 0f; // 스프라이트가 scale 1일 때의 실제 반지름
+
+    // 외부에서 현재 UI 켜졌는지 확인할 때 쓸 프로퍼티
+    public bool IsUIActive => uiCanvas != null && uiCanvas.activeSelf;
+    
     public void Initialize(HeroData data)
     {
         Data = data;
@@ -23,16 +29,22 @@ public class HeroAttackController : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         attackTimer = 0f;
 
-        // UI는 기본 꺼두기
-        if (uiCanvas != null)
-            uiCanvas.SetActive(false);
+        // 1) 소환 직후: 모든 UI 요소들을 완전히 비활성화
+        SetAllUIActive(false);
+
+        // 2) Range Sprite 기본 반지름 자동 계산 (Inspector에서 설정하지 않은 경우)
+        if (rangeSpriteBaseRadius <= 0f)
+        {
+            CalculateRangeSpriteBaseRadius();
+        }
 
         // 버튼 이벤트 연결
-        if (combineButton != null)
-        {
-            combineButton.onClick.RemoveAllListeners();
-            combineButton.onClick.AddListener(OnCombine);
-        }
+        // if (combineButton != null)
+        // {
+        //     combineButton.onClick.RemoveAllListeners();
+        //     combineButton.onClick.AddListener(OnCombine);
+        // }
+
         if (deleteButton != null)
         {
             deleteButton.onClick.RemoveAllListeners();
@@ -57,10 +69,29 @@ public class HeroAttackController : MonoBehaviour
     public void ToggleUI()
     {
         if (uiCanvas == null) return;
+
         bool show = !uiCanvas.activeSelf;
-        uiCanvas.SetActive(show);
-        if (show)
+        
+        // 모든 UI 요소들을 일괄적으로 켜고/끄기
+        SetAllUIActive(show);
+        
+        if (show) 
+        {
             UpdateRangeUI();
+        }
+    }
+
+    // 모든 UI 요소들을 일괄적으로 켜고/끄는 메서드
+    private void SetAllUIActive(bool active)
+    {
+        if (uiCanvas != null)
+            uiCanvas.SetActive(active);
+            
+        if (rangeSprite != null)
+            rangeSprite.gameObject.SetActive(active);
+            
+        if (deleteButton != null)
+            deleteButton.gameObject.SetActive(active);
     }
 
     // 사거리 이미지를 Data.range와 같은 스케일로 설정
@@ -68,10 +99,60 @@ public class HeroAttackController : MonoBehaviour
     {
         if (rangeSprite == null) return;
 
-        float r = Data.range;
+        float targetRange = Data.range;
         
+        // 스프라이트의 기본 반지름을 고려한 스케일 계산
+        // 목표 반지름 = 기본 반지름 × 스케일
+        // 따라서 스케일 = 목표 반지름 ÷ 기본 반지름
+        float scale = targetRange / rangeSpriteBaseRadius;
+
         // SpriteRenderer은 Transform 스케일로 조절
-        rangeSprite.transform.localScale = new Vector3(r, r, 1f);
+        rangeSprite.transform.localScale = new Vector3(scale, scale, 1f);
+        
+        // 디버그 로그 (필요시 주석 해제)
+        // Debug.Log($"Range UI 업데이트: 목표범위={targetRange}, 기본반지름={rangeSpriteBaseRadius}, 적용스케일={scale}");
+    }
+
+    // Range Sprite의 기본 반지름을 자동으로 계산하는 메서드
+    private void CalculateRangeSpriteBaseRadius()
+    {
+        if (rangeSprite == null) return;
+
+        // 스프라이트의 실제 크기를 가져옴
+        Sprite sprite = rangeSprite.sprite;
+        if (sprite == null) return;
+
+        // 스프라이트의 월드 단위 크기 계산
+        // sprite.bounds.size는 픽셀을 월드 단위로 변환한 크기
+        float spriteWidth = sprite.bounds.size.x;
+        float spriteHeight = sprite.bounds.size.y;
+        
+        // 원형 스프라이트라고 가정하고 반지름 계산 (너비와 높이 중 작은 값의 절반)
+        rangeSpriteBaseRadius = Mathf.Min(spriteWidth, spriteHeight) / 2f;
+        
+        Debug.Log($"Range Sprite 기본 반지름 자동 계산: {rangeSpriteBaseRadius}");
+    }
+
+    // Inspector에서 Range Sprite 기본 반지름을 수동으로 설정하는 버튼
+    [ContextMenu("Calculate Range Sprite Base Radius")]
+    private void CalculateRangeSpriteBaseRadiusInEditor()
+    {
+        CalculateRangeSpriteBaseRadius();
+    }
+
+    // Inspector에서 현재 Range UI를 테스트하는 버튼
+    [ContextMenu("Test Range UI")]
+    private void TestRangeUI()
+    {
+        if (Data != null)
+        {
+            UpdateRangeUI();
+            Debug.Log($"Range UI 테스트: Data.range={Data.range}, 스케일={rangeSprite.transform.localScale}");
+        }
+        else
+        {
+            Debug.LogWarning("HeroData가 설정되지 않아 테스트할 수 없습니다.");
+        }
     }
 
     private void OnCombine()
@@ -82,8 +163,19 @@ public class HeroAttackController : MonoBehaviour
 
     private void OnDelete()
     {
-        // TODO: 삭제 로직 호출 (예: UIManager.Instance.DeleteHero(this); )
-        Debug.Log($"삭제 요청: {Data.heroType}");
+        // 1) 현재 슬롯 정보 조회
+        var heroCtrl = GetComponent<HeroController>();
+        int countToRemove = heroCtrl.Count;
+
+        // 2) 인구 수 차감 (개체 수 기준)
+        SummonManager.Instance.ChangePopulation(-countToRemove);
+
+        // 3) 슬롯에서 영웅 완전 제거 (Destroy)
+        var slot = heroCtrl.originalSlot;
+        if (slot != null)
+            slot.ClearHero();      // ClearHero(true) → 게임오브젝트 파괴
+        else
+            Destroy(gameObject);
     }
 
     /// 범위 내 태그 "Enemy" 몬스터 중 가장 가까운 대상을 찾아 공격합니다.
@@ -132,29 +224,6 @@ public class HeroAttackController : MonoBehaviour
         }
     }
 
-    // // 클릭 토글용 퍼블릭 메서드
-    // public void ToggleRangeIndicator()
-    // {
-    //     if (rangeIndicatorInstance == null) return;
-
-    //     isRangeVisible = !isRangeVisible;
-    //     rangeIndicatorInstance.SetActive(isRangeVisible);
-    //     if (isRangeVisible)
-    //     {
-    //         UpdateRangeIndicatorScale();
-    //         lastRange = Data.range;
-    //     }
-    // }
-
-    // // 스케일 갱신
-    // private void UpdateRangeIndicatorScale()
-    // {
-    //     // 스프라이트가 반경 1 유닛일 때,
-    //     // 지름 = range * 2
-    //     float diameter = Data.range * 2f;
-    //     rangeIndicatorInstance.transform.localScale = new Vector3(diameter, diameter, 1f);
-    // }
-
     // (디버그용) 공격 범위 씬뷰에 가시화
     private void OnDrawGizmosSelected()
     {
@@ -164,5 +233,14 @@ public class HeroAttackController : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, Data.range);
+        
+        // Range Sprite와 비교용으로 다른 색상으로도 그리기
+        if (rangeSprite != null)
+        {
+            Gizmos.color = Color.yellow;
+            float currentScale = rangeSprite.transform.localScale.x;
+            float visualRadius = rangeSpriteBaseRadius * currentScale;
+            Gizmos.DrawWireSphere(transform.position, visualRadius);
+        }
     }
 }

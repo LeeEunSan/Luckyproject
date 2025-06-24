@@ -85,6 +85,24 @@ public class HeroController : MonoBehaviour
 
             if (hit.collider != null && hit.collider.gameObject == gameObject)
             {
+                // 1) 우클릭으로 두 가지 UI 동시에 토글 (반대로 작동하도록 수정)
+                bool currentUIState = attackController?.IsUIActive ?? false;
+                
+                // Prefab UI는 현재 상태와 반대로
+                attackController?.ToggleUI();
+                
+                // Hero Info Panel은 현재 상태와 같은 방향으로 (Prefab UI와 반대)
+                if (currentUIState)
+                {
+                    // Prefab UI가 켜져있었다면 Info Panel을 끄고
+                    UIManager.Instance.HideHeroInfo();
+                }
+                else
+                {
+                    // Prefab UI가 꺼져있었다면 Info Panel을 켜기
+                    UIManager.Instance.ShowHeroInfo(Data);
+                }
+
                 if (originalSlot == null)
                 {
                     Debug.LogWarning("RecordOriginalSlot이 호출되지 않아 드래그를 시작할 수 없습니다.");
@@ -302,12 +320,5 @@ public class HeroController : MonoBehaviour
         {
             hero.transform.position = targetWorldPos;
         }
-    }
-
-    // 왼쪽 클릭 시 호출됩니다.
-    private void OnMouseDown()
-    {
-        // Collider2D가 있어야 동작합니다.
-        attackController?.ToggleUI();
     }
 }
