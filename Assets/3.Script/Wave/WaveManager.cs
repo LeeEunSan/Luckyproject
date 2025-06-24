@@ -118,7 +118,7 @@ public class WaveManager : MonoBehaviour
                 if (waveSpawnCount >= maxSpawnPerWave)
                 {
                     allMonstersSpawned = true;
-                    Debug.Log($"[WaveManager] 웨이브 {currentWaveIndex + 1} - 20마리 스폰 완료. 웨이브 시간 종료 대기 중...");
+//                    Debug.Log($"[WaveManager] 웨이브 {currentWaveIndex + 1} - 20마리 스폰 완료. 웨이브 시간 종료 대기 중...");
                 }
                 else
                 {
@@ -131,7 +131,7 @@ public class WaveManager : MonoBehaviour
         }
 
         // 웨이브 완료 로그
-        Debug.Log($"[WaveManager] 웨이브 {currentWaveIndex + 1} 완료 - 스폰: {waveSpawnCount}마리, 총 누적: {aliveMonsterCount}마리");
+//        Debug.Log($"[WaveManager] 웨이브 {currentWaveIndex + 1} 완료 - 스폰: {waveSpawnCount}마리, 총 누적: {aliveMonsterCount}마리");
     }
 
     private void SpawnOneEnemy(WaveData wave)
