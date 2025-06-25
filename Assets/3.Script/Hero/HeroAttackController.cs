@@ -12,7 +12,6 @@ public class HeroAttackController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private GameObject uiCanvas; // 캔버스 전체
     [SerializeField] private SpriteRenderer rangeSprite; // 캔버스 하위의 사거리 이미지 (Scale 동기화용)
-    //[SerializeField] private Button combineButton; // 합성 버튼
     [SerializeField] private Button deleteButton; // 삭제 버튼
 
     [Header("Range Sprite 설정")]
@@ -21,7 +20,7 @@ public class HeroAttackController : MonoBehaviour
 
     // 외부에서 현재 UI 켜졌는지 확인할 때 쓸 프로퍼티
     public bool IsUIActive => uiCanvas != null && uiCanvas.activeSelf;
-    
+
     public void Initialize(HeroData data)
     {
         Data = data;
@@ -37,13 +36,6 @@ public class HeroAttackController : MonoBehaviour
         {
             CalculateRangeSpriteBaseRadius();
         }
-
-        // 버튼 이벤트 연결
-        // if (combineButton != null)
-        // {
-        //     combineButton.onClick.RemoveAllListeners();
-        //     combineButton.onClick.AddListener(OnCombine);
-        // }
 
         if (deleteButton != null)
         {
@@ -71,11 +63,11 @@ public class HeroAttackController : MonoBehaviour
         if (uiCanvas == null) return;
 
         bool show = !uiCanvas.activeSelf;
-        
+
         // 모든 UI 요소들을 일괄적으로 켜고/끄기
         SetAllUIActive(show);
-        
-        if (show) 
+
+        if (show)
         {
             UpdateRangeUI();
         }
@@ -86,10 +78,10 @@ public class HeroAttackController : MonoBehaviour
     {
         if (uiCanvas != null)
             uiCanvas.SetActive(active);
-            
+
         if (rangeSprite != null)
             rangeSprite.gameObject.SetActive(active);
-            
+
         if (deleteButton != null)
             deleteButton.gameObject.SetActive(active);
     }
@@ -100,7 +92,7 @@ public class HeroAttackController : MonoBehaviour
         if (rangeSprite == null) return;
 
         float targetRange = Data.range;
-        
+
         // 스프라이트의 기본 반지름을 고려한 스케일 계산
         // 목표 반지름 = 기본 반지름 × 스케일
         // 따라서 스케일 = 목표 반지름 ÷ 기본 반지름
@@ -108,7 +100,7 @@ public class HeroAttackController : MonoBehaviour
 
         // SpriteRenderer은 Transform 스케일로 조절
         rangeSprite.transform.localScale = new Vector3(scale, scale, 1f);
-        
+
         // 디버그 로그 (필요시 주석 해제)
         // Debug.Log($"Range UI 업데이트: 목표범위={targetRange}, 기본반지름={rangeSpriteBaseRadius}, 적용스케일={scale}");
     }
@@ -126,10 +118,10 @@ public class HeroAttackController : MonoBehaviour
         // sprite.bounds.size는 픽셀을 월드 단위로 변환한 크기
         float spriteWidth = sprite.bounds.size.x;
         float spriteHeight = sprite.bounds.size.y;
-        
+
         // 원형 스프라이트라고 가정하고 반지름 계산 (너비와 높이 중 작은 값의 절반)
         rangeSpriteBaseRadius = Mathf.Min(spriteWidth, spriteHeight) / 2f;
-        
+
         Debug.Log($"Range Sprite 기본 반지름 자동 계산: {rangeSpriteBaseRadius}");
     }
 
@@ -205,6 +197,7 @@ public class HeroAttackController : MonoBehaviour
 
         // 부모 쪽으로 EnemyController를 찾아야 올바르게 참조됩니다
         var enemy = closestHit.GetComponentInParent<EnemyController>();
+
         if (enemy != null)
             PerformAttack(enemy);
     }
@@ -212,7 +205,14 @@ public class HeroAttackController : MonoBehaviour
     private void PerformAttack(EnemyController target)
     {
         // 1) 실제 데미지 적용
-        target.TakeDamage(Data.damage);
+        // 강화된 공격력 적용
+        float mult = EnhancementManager.Instance.GetDamageMultiplier(Data.rarity);
+        int finalDmg = Mathf.RoundToInt(Data.damage * mult);
+        
+        // 디버그 로그 추가
+//        Debug.Log($"공격 실행: {Data.Hero_Name}({Data.rarity}) | 기본데미지={Data.damage}, 배율={mult:F2}, 최종데미지={finalDmg}");
+        
+        target.TakeDamage(finalDmg);
 
         // 2) 활성화된 모든 child 모델 Animator에 트리거
         var animators = GetComponentsInChildren<Animator>(true);
@@ -233,7 +233,7 @@ public class HeroAttackController : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, Data.range);
-        
+
         // Range Sprite와 비교용으로 다른 색상으로도 그리기
         if (rangeSprite != null)
         {

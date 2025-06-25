@@ -49,7 +49,8 @@ public class EnemyController : MonoBehaviour
         if (healthBar != null)
             healthBar.value = Mathf.Max(CurrentHp, 0);
 
-        DamageText.text = $"{amount}";
+        // 데미지 텍스트를 정수로 표시 (소수점 제거)
+        DamageText.text = $"{Mathf.RoundToInt(amount)}";
         Feedback.PlayFeedbacks();
 
         // 피격 애니메이션
@@ -60,10 +61,6 @@ public class EnemyController : MonoBehaviour
         if (CurrentHp <= 0)
             Die();
     }
-
-    // 내부: healthBar 값 업데이트
-    //private void UpdateHealthBar();
-
 
     // 내부: 체력 <= 0 시 호출
     private void Die()

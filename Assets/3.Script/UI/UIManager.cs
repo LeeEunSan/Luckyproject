@@ -12,7 +12,8 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI spawnCountText; //스폰된 수.
     public TextMeshProUGUI waveTime; //웨이브 시간.
     public TextMeshProUGUI NextWaveCountDown; //다음 웨이브 카운트다운
-    public Text HeroCount;
+    public TextMeshProUGUI HeroCount;
+    public TextMeshProUGUI HeroCount1;
 
     [Header("Info 텍스트")]
     public MMF_Player Feedback_1;
@@ -24,7 +25,7 @@ public class UIManager : MonoBehaviour
     [Header("Game Over Panel Name (Feel)")]
     public GameObject GameOverPanel;
 
-    [Header("Hero Info Panel")]
+    [Header("영웅 정보 창")]
     [SerializeField] private GameObject heroInfoPanel;
     [SerializeField] private Image infoSpriteImage; // Sprite 대신 Image 컴포넌트 사용
     [SerializeField] private TextMeshProUGUI infoNameText;
@@ -34,6 +35,44 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI infoskillNameText;
     [SerializeField] private TextMeshProUGUI infoskillTypeText;
     [SerializeField] private TextMeshProUGUI infoskillInfoText;
+    [SerializeField] private TextMeshProUGUI infoEnhanceText;
+
+    [Header("재화 UI")]
+    [SerializeField] private TextMeshProUGUI diamondText; // 다이아 잔량 표시
+    [SerializeField] private TextMeshProUGUI diamondText_1;
+    [SerializeField] private TextMeshProUGUI diamondText_2;
+    [SerializeField] private TextMeshProUGUI coinText;
+    [SerializeField] private TextMeshProUGUI coinText_1;
+
+    [Header("가챠 버튼")]
+    [SerializeField] private Button rareBtn1;
+    [SerializeField] private Button rareBtn2;
+    [SerializeField] private Button epicBtn1;
+    [SerializeField] private Button epicBtn2;
+    [SerializeField] private Button legendaryBtn1;
+    [SerializeField] private Button legendaryBtn2;
+
+    [Header("강화 버튼")]
+    [SerializeField] private Button commonRareBtn;
+    [SerializeField] private Button heroBtn;
+    [SerializeField] private Button legendBtn;
+    [SerializeField] private Button probBtn;
+
+    [Header("레벨 & 비용")]
+    [SerializeField] private TextMeshProUGUI commonRareLvText;
+    [SerializeField] private TextMeshProUGUI commonRareCostText;
+    [SerializeField] private TextMeshProUGUI heroLvText;
+    [SerializeField] private TextMeshProUGUI heroCostText;
+    [SerializeField] private TextMeshProUGUI legendLvText;
+    [SerializeField] private TextMeshProUGUI legendCostText;
+    [SerializeField] private TextMeshProUGUI probLvText;
+    [SerializeField] private TextMeshProUGUI probCostText;
+
+    [Header("확률 값")]
+    [SerializeField] private TextMeshProUGUI probCommonText;
+    [SerializeField] private TextMeshProUGUI probRareText;
+    [SerializeField] private TextMeshProUGUI probEpicText;
+    [SerializeField] private TextMeshProUGUI probLegendText;
 
     // 현재 화면에 띄운 데이터 체크용
     private HeroData currentInfoData;
@@ -53,6 +92,36 @@ public class UIManager : MonoBehaviour
         // 초기에는 Hero Info Panel 및 이미지 비활성화
         if (heroInfoPanel != null) heroInfoPanel.SetActive(false);
         if (infoSpriteImage != null) infoSpriteImage.gameObject.SetActive(false);
+
+        // 다이아 초기 표시
+        if (diamondText != null)
+            diamondText.text = SummonManager.Instance.CurrentDiamonds.ToString();
+        if (diamondText_1 != null)
+            diamondText_1.text = SummonManager.Instance.CurrentDiamonds.ToString();
+        if (diamondText_2 != null)
+            diamondText_2.text = SummonManager.Instance.CurrentDiamonds.ToString();
+
+        // 뽑기 버튼 리스너 연결
+        if (rareBtn1 != null) rareBtn1.onClick.AddListener(() => SummonManager.Instance.SummonRare());
+        if (rareBtn2 != null) rareBtn2.onClick.AddListener(() => SummonManager.Instance.SummonRare());
+        if (epicBtn1 != null) epicBtn1.onClick.AddListener(() => SummonManager.Instance.SummonEpic());
+        if (epicBtn2 != null) epicBtn2.onClick.AddListener(() => SummonManager.Instance.SummonEpic());
+        if (legendaryBtn1 != null) legendaryBtn1.onClick.AddListener(() => SummonManager.Instance.SummonLegendary());
+        if (legendaryBtn2 != null) legendaryBtn2.onClick.AddListener(() => SummonManager.Instance.SummonLegendary());
+
+        // 초기 화폐 UI
+        UpdateCoinUI(EnhancementManager.Instance.CurrentCoins);
+        UpdateCoinUI_1(EnhancementManager.Instance.CurrentCoins);
+        UpdateDiamondUI(EnhancementManager.Instance.CurrentDiamonds);
+
+        // 강화 버튼들
+        commonRareBtn.onClick.AddListener(() => EnhancementManager.Instance.Enhance(EnhanceType.CommonRare));
+        heroBtn.onClick.AddListener(() => EnhancementManager.Instance.Enhance(EnhanceType.Hero));
+        legendBtn.onClick.AddListener(() => EnhancementManager.Instance.Enhance(EnhanceType.Legend));
+        probBtn.onClick.AddListener(() => EnhancementManager.Instance.Enhance(EnhanceType.Probability));
+
+        // 초기 강화 UI 렌더
+        UpdateEnhancementUI();
     }
 
     // 현재 웨이브를 보여줍니다.
@@ -79,6 +148,7 @@ public class UIManager : MonoBehaviour
 
         int m = totalSeconds / 60;
         int s = totalSeconds % 60;
+
         waveTime.text = $"{m:00}:{s:00}";
     }
 
@@ -100,6 +170,9 @@ public class UIManager : MonoBehaviour
     {
         Feedback_2.PlayFeedbacks();
     }
+
+    public void UpdateCoinUI(int c) => coinText.text = c.ToString();
+    public void UpdateCoinUI_1(int c) => coinText_1.text = c.ToString();
 
     // 우클릭 시 호출: 히어로 데이터로 UI 갱신 후 보여주기
     public void ShowHeroInfo(HeroData data)
@@ -135,6 +208,13 @@ public class UIManager : MonoBehaviour
             infoDamageText.text = $"{data.damage}";
         if (infoAttackSpeedText != null)
             infoAttackSpeedText.text = $"{data.attackSpeed}";
+
+        float mult = EnhancementManager.Instance.GetDamageMultiplier(data.rarity);
+
+        int bonus = Mathf.FloorToInt(data.damage * (mult - 1f));
+
+        if (infoEnhanceText != null)
+            infoEnhanceText.text = $"+{bonus}";
     }
 
     // 필요 시 숨기기
@@ -146,7 +226,7 @@ public class UIManager : MonoBehaviour
 
         if (infoSpriteImage != null)
             infoSpriteImage.gameObject.SetActive(false);
-        
+
         currentInfoData = null;
     }
 
@@ -160,6 +240,7 @@ public class UIManager : MonoBehaviour
     public void HeroMaxCount(int count, int countMax)
     {
         HeroCount.text = $"{count} / {countMax}";
+        HeroCount1.text = $"{count} / {countMax}";
     }
 
     // 토글 메서드는 HeroController에서 직접 처리하도록 변경했으므로 제거하거나 단순화
@@ -170,5 +251,56 @@ public class UIManager : MonoBehaviour
             HideHeroInfo();
         else
             ShowHeroInfo(data);
+    }
+
+    //다이아 UI 갱신
+    public void UpdateDiamondUI(int current)
+    {
+        if (diamondText != null) diamondText.text = current.ToString();
+        if (diamondText_1 != null) diamondText_1.text = current.ToString();
+        if (diamondText_2 != null) diamondText_2.text = current.ToString();
+    }
+
+    //뽑기 실패 피드백 (선택사항)
+    public void ShowSummonFailed()
+    {
+        // TODO: 페이드/토스트 등 사용자 피드백
+        Debug.Log("뽑기 실패: 확률에 걸리지 않았습니다.");
+    }
+
+    // 강화 레벨, 비용, 소환 확률을 모두 갱신
+    public void UpdateEnhancementUI()
+    {
+        // 레벨 (Max 처리 추가)
+        int crLv = EnhancementManager.Instance.GetEnhanceLevel(EnhanceType.CommonRare);
+        int hLv = EnhancementManager.Instance.GetEnhanceLevel(EnhanceType.Hero);
+        int lLv = EnhancementManager.Instance.GetEnhanceLevel(EnhanceType.Legend);
+        int pLv = EnhancementManager.Instance.GetEnhanceLevel(EnhanceType.Probability);
+
+        // 레벨 텍스트 (Max 레벨일 때 "Max" 표시)
+        const int MaxLevel = 12; // EnhancementManager의 MaxLevel과 동일하게 설정
+        
+        commonRareLvText.text = crLv >= MaxLevel ? "Max" : $"Lv.{crLv}";
+        heroLvText.text = hLv >= MaxLevel ? "Max" : $"Lv.{hLv}";
+        legendLvText.text = lLv >= MaxLevel ? "Max" : $"Lv.{lLv}";
+        probLvText.text = pLv >= MaxLevel ? "Max" : $"Lv.{pLv}";
+
+        // 비용 (Max 처리)
+        int cost;
+        cost = EnhancementManager.Instance.GetNextCost(EnhanceType.CommonRare);
+        commonRareCostText.text = cost < 0 ? "Max" : cost.ToString();
+        cost = EnhancementManager.Instance.GetNextCost(EnhanceType.Hero);
+        heroCostText.text = cost < 0 ? "Max" : cost.ToString();
+        cost = EnhancementManager.Instance.GetNextCost(EnhanceType.Legend);
+        legendCostText.text = cost < 0 ? "Max" : cost.ToString();
+        cost = EnhancementManager.Instance.GetNextCost(EnhanceType.Probability);
+        probCostText.text = cost < 0 ? "Max" : cost.ToString();
+
+        // 소환 확률 표시
+        var probs = EnhancementManager.Instance.GetCurrentProbability();
+        probCommonText.text = $"{probs[0]:0.##}%";
+        probRareText.text = $"{probs[1]:0.##}%";
+        probEpicText.text = $"{probs[2]:0.##}%";
+        probLegendText.text = $"{probs[3]:0.##}%";
     }
 }

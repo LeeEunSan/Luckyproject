@@ -164,7 +164,7 @@ public class WaveManager : MonoBehaviour
         // UI 업데이트
         UIManager.Instance.UpdateAliveCount(aliveMonsterCount);
 
-        Debug.Log($"[WaveManager] 몬스터 사망 - 현재 생존: {aliveMonsterCount}마리");
+//        Debug.Log($"[WaveManager] 몬스터 사망 - 현재 생존: {aliveMonsterCount}마리");
     }
 
     private void OnAllWavesComplete()
