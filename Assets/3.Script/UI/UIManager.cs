@@ -277,6 +277,7 @@ public class UIManager : MonoBehaviour
     //뽑기 실패 피드백 (선택사항)
     public void ShowSummonFailed()
     {
+        SoundManager.Instance.PlaySummonFail();
         // TODO: 페이드/토스트 등 사용자 피드백
         Debug.Log("뽑기 실패: 확률에 걸리지 않았습니다.");
     }
@@ -338,21 +339,10 @@ public class UIManager : MonoBehaviour
         HideSpecialSpawnButton();
     }
 
-    public void ShowWaveStartBanner(int waveNum, float duration)
-    {
-        if (waveStartText == null) return;
-        WaveStartFB.PlayFeedbacks();
-        StopCoroutine("WaveStartCoroutine");
-        StartCoroutine(WaveStartCoroutine(waveNum, duration));
-    }
-
-    private IEnumerator WaveStartCoroutine(int waveNum, float duration)
+    public void ShowWaveStartBanner(int waveNum)
     {
         WaveStartFB.PlayFeedbacks();
-        waveStartText.text = $"WAVE {waveNum}";
-        waveStartText.gameObject.SetActive(true);
-        yield return new WaitForSeconds(duration);
-        waveStartText.gameObject.SetActive(false);
+        waveStartText.text = $"Wave {waveNum}";
     }
     
     public void ShowFreeSummonPanel(int seconds)

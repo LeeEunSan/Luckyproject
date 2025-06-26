@@ -24,6 +24,8 @@ public class MergeManager : MonoBehaviour
         if (oldHero == null || oldHero.Count < 3)
             return;
 
+        SoundManager.Instance.PlayMerge();
+
         // 1) 병합 전 인구 변경
         SummonManager.Instance.ChangePopulation(-2);
 
@@ -43,6 +45,7 @@ public class MergeManager : MonoBehaviour
         var candidates = heroDatas
             .Where(d => d.rarity == nextRarity && d.heroType == oldHero.HeroType)
             .ToArray();
+
         if (candidates.Length == 0)
         {
             Debug.LogWarning($"[{nextRarity}] 매칭되는 HeroData 없음");
@@ -63,6 +66,12 @@ public class MergeManager : MonoBehaviour
             existingSlot.CurrentHero.IncreaseCount();
             existingSlot.UpdateMergeButtonVisibility();
             return;
+        }
+
+        // 신화 등급 소환 시
+        if (newData.rarity == HeroRarity.Mythic)
+        {
+            SoundManager.Instance.PlaySummonByRarity(HeroRarity.Mythic);
         }
 
         // 6) 없다면 원래 자리(slot)에 새로 생성

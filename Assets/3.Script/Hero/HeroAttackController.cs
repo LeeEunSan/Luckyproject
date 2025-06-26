@@ -243,6 +243,9 @@ public class HeroAttackController : MonoBehaviour
         // 2) 활성화된 모든 child 모델 Animator에 트리거
         var animators = GetComponentsInChildren<Animator>(true);
 
+        // 영웅 타입에 따른 공격 사운드
+        SoundManager.Instance.PlayHeroAttack(Data.heroType);
+
         foreach (var anim in animators)
         {
             if (anim.gameObject.activeInHierarchy)

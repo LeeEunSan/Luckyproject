@@ -175,13 +175,22 @@ public class SummonManager : MonoBehaviour
 
         if (matchingSlot != null)
         {
+            // 기존 영웅에 스택
             matchingSlot.CurrentHero.IncreaseCount();
             matchingSlot.UpdateMergeButtonVisibility();
         }
         else
         {
+            // 새 영웅 소환
             var empty = slots.First(s => s.childCount == 0);
             var go = Instantiate(data.prefab, empty.position, Quaternion.identity, empty);
+
+            // 영웅 소환 사운드 재생
+            SoundManager.Instance.PlayHeroSpawn();
+
+            // 등급별 소환 사운드도 재생
+            SoundManager.Instance.PlaySummonByRarity(rarity);
+
             var attackCtrl = go.GetComponent<HeroAttackController>();
             attackCtrl.Initialize(data);
             var ctrl = go.GetComponent<HeroController>();
@@ -214,10 +223,16 @@ public class SummonManager : MonoBehaviour
         currentDiamonds += amount;
         UIManager.Instance.UpdateDiamondUI(currentDiamonds);
     }
-    
+
     // 특정 등급으로 무료 소환
     public void FreeSummonByRarity(HeroRarity rarity)
     {
         SummonByRarity(rarity);
+    }
+
+    public void ShowSummonFailed()
+    {
+        SoundManager.Instance.PlaySummonFail();
+        // UI 표시...
     }
 }

@@ -90,7 +90,7 @@ public class EnhancementManager : MonoBehaviour
         return true;
     }
 
-    // ─ 레벨 / 비용 조회 ─────────────────────────────────
+    // 레벨 / 비용 조회
     public int GetEnhanceLevel(EnhanceType type)
     {
         return type switch
@@ -118,12 +118,25 @@ public class EnhancementManager : MonoBehaviour
         };
     }
 
-    // ─ 강 화 실행 ──────────────────────────────────────
+    // 강 화 실행
+    // EnhancementManager.cs의 Enhance 메서드를 찾아서 이렇게 수정하세요:
+
     public void Enhance(EnhanceType type)
     {
         int lvl = GetEnhanceLevel(type);
-        if (lvl >= MaxLevel) return; // 이미 Max
 
+        // 이미 최대 레벨인 경우
+        if (lvl >= MaxLevel)
+        {
+            // 최대 레벨 사운드 재생
+            if (SoundManager.Instance != null)
+                SoundManager.Instance.PlayEnhanceMax();
+
+            Debug.LogWarning($"{type} 강화는 이미 최대 레벨입니다.");
+            return;
+        }
+
+        // 재화 소모 시도
         bool ok = type switch
         {
             EnhanceType.CommonRare => TrySpendCoins(GetNextCost(type)),
@@ -132,6 +145,7 @@ public class EnhancementManager : MonoBehaviour
             EnhanceType.Probability => TrySpendCoins(GetNextCost(type)),
             _ => false
         };
+
         if (!ok)
         {
             Debug.LogWarning("강화에 필요한 재화가 부족합니다.");
@@ -147,11 +161,25 @@ public class EnhancementManager : MonoBehaviour
             case EnhanceType.Probability: probabilityLevel++; break;
         }
 
+        // 강화 성공 사운드 재생
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.PlayEnhanceSuccess();
+
         // 디버그 로그 추가
-        //Debug.Log($"강화 완료: {type}, 새 레벨: {GetEnhanceLevel(type)}");
+        Debug.Log($"강화 완료: {type}, 새 레벨: {GetEnhanceLevel(type)}");
 
         // UI 갱신
         UIManager.Instance.UpdateEnhancementUI();
+
+        // 강화 후 최대 레벨에 도달했는지 확인
+        if (GetEnhanceLevel(type) >= MaxLevel)
+        {
+            // 최대 레벨 도달 시 특별 사운드 재생
+            if (SoundManager.Instance != null)
+                SoundManager.Instance.PlayEnhanceMax();
+
+            Debug.Log($"{type} 강화가 최대 레벨에 도달했습니다!");
+        }
     }
 
     // 누적 강화 데미지 배율 계산
@@ -209,13 +237,37 @@ public class EnhancementManager : MonoBehaviour
         UIManager.Instance.UpdateEnhancementUI();
         //Debug.Log("강화 레벨이 초기화되었습니다.");
     }
-    
-    // ❺ 코인 보상용
+
+    // 코인 보상용
     public void AddCoins(int amount)
     {
         currentCoins += amount;
         // 코인 UI 두 곳 모두 업데이트
         UIManager.Instance.UpdateCoinUI(currentCoins);
         UIManager.Instance.UpdateCoinUI_1(currentCoins);
+    }
+
+    // 재화를 초기값으로 리셋
+    public void ResetCurrency()
+    {
+        currentCoins = startingCoins;
+        currentDiamonds = startingDiamonds;
+
+        // UI 업데이트
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateCoinUI(currentCoins);
+            UIManager.Instance.UpdateCoinUI_1(currentCoins);
+            UIManager.Instance.UpdateDiamondUI(currentDiamonds);
+        }
+
+        Debug.Log($"재화 리셋 완료 - 코인: {currentCoins}, 다이아: {currentDiamonds}");
+    }
+
+    // 게임 완전 리셋 (강화 레벨 + 재화)
+    public void CompleteReset()
+    {
+        ResetEnhancements();
+        ResetCurrency();
     }
 }

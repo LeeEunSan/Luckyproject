@@ -65,7 +65,11 @@ public class EnemyController : MonoBehaviour
     // 내부: 체력 <= 0 시 호출
     private void Die()
     {
+
         if (isDead) return; // 중복 사망 방지
+
+        SoundManager.Instance.PlayEnemyDeath();
+        
         isDead = true;
 
         // WaveManager에 사망 알림
