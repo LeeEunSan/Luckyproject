@@ -18,8 +18,17 @@ public class HeroAttackController : MonoBehaviour
     [SerializeField, Tooltip("Range 스프라이트의 기본 반지름 (월드 단위)")]
     private float rangeSpriteBaseRadius = 0f; // 스프라이트가 scale 1일 때의 실제 반지름
 
+    [SerializeField] private CanvasGroup uiCanvasGroup; // 새로 추가
+
+
     // 외부에서 현재 UI 켜졌는지 확인할 때 쓸 프로퍼티
     public bool IsUIActive => uiCanvas != null && uiCanvas.activeSelf;
+
+
+    // private void Awake()
+    // {
+    //     attackController = GetComponent<HeroAttackController>();
+    // }
 
     public void Initialize(HeroData data)
     {
@@ -42,6 +51,11 @@ public class HeroAttackController : MonoBehaviour
             deleteButton.onClick.RemoveAllListeners();
             deleteButton.onClick.AddListener(OnDelete);
         }
+
+        // if (attackController == null)
+        //     attackController = GetComponent<HeroAttackController>();
+        // if (attackController != null)
+        //     attackController.Initialize(data);
     }
 
     private void Update()
@@ -64,13 +78,20 @@ public class HeroAttackController : MonoBehaviour
 
         bool show = !uiCanvas.activeSelf;
 
+        uiCanvas.SetActive(show);
+        // CanvasGroup이 있다면, raycast 차단도 함께 제어
+        if (uiCanvasGroup != null)
+        {
+            uiCanvasGroup.interactable = show;
+            uiCanvasGroup.blocksRaycasts = show;
+        }
+
         // 모든 UI 요소들을 일괄적으로 켜고/끄기
         SetAllUIActive(show);
 
         if (show)
-        {
             UpdateRangeUI();
-        }
+        
     }
 
     // 모든 UI 요소들을 일괄적으로 켜고/끄는 메서드
@@ -122,7 +143,7 @@ public class HeroAttackController : MonoBehaviour
         // 원형 스프라이트라고 가정하고 반지름 계산 (너비와 높이 중 작은 값의 절반)
         rangeSpriteBaseRadius = Mathf.Min(spriteWidth, spriteHeight) / 2f;
 
-        Debug.Log($"Range Sprite 기본 반지름 자동 계산: {rangeSpriteBaseRadius}");
+        //Debug.Log($"Range Sprite 기본 반지름 자동 계산: {rangeSpriteBaseRadius}");
     }
 
     // Inspector에서 Range Sprite 기본 반지름을 수동으로 설정하는 버튼
@@ -147,11 +168,11 @@ public class HeroAttackController : MonoBehaviour
         }
     }
 
-    private void OnCombine()
-    {
-        // TODO: 합성 매니저 호출
-        Debug.Log($"합성 요청: {Data.heroType}");
-    }
+    // private void OnCombine()
+    // {
+    //     // TODO: 합성 매니저 호출
+    //     Debug.Log($"합성 요청: {Data.heroType}");
+    // }
 
     private void OnDelete()
     {
@@ -183,7 +204,12 @@ public class HeroAttackController : MonoBehaviour
 
         foreach (var c in hits)
         {
-            if (!c.CompareTag("Enemy")) continue;
+            // Enemy, BossEnemy, SpecialEnemy 태그 모두 공격 대상
+            if (!c.CompareTag("Enemy")
+             && !c.CompareTag("BossEnemy")
+             && !c.CompareTag("SpecialEnemy"))
+                continue;
+            
             float d = (c.transform.position - transform.position).sqrMagnitude;
             if (d < minDist)
             {
@@ -210,7 +236,7 @@ public class HeroAttackController : MonoBehaviour
         int finalDmg = Mathf.RoundToInt(Data.damage * mult);
         
         // 디버그 로그 추가
-//        Debug.Log($"공격 실행: {Data.Hero_Name}({Data.rarity}) | 기본데미지={Data.damage}, 배율={mult:F2}, 최종데미지={finalDmg}");
+        //Debug.Log($"공격 실행: {Data.Hero_Name}({Data.rarity}) | 기본데미지={Data.damage}, 배율={mult:F2}, 최종데미지={finalDmg}");
         
         target.TakeDamage(finalDmg);
 

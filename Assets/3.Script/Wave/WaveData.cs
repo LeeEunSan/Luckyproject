@@ -11,4 +11,7 @@ public class WaveData : ScriptableObject
     public EnemyData enemyData;     // 스탯만 담긴 SO
     //public int count = 20;           // 스폰할 총 수
     public float spawnInterval = 1f; // 몬스터 사이 스폰 텀(초)
+
+    [Header("이 웨이브가 보스인가?")]
+    public bool isBossWave = false;
 }

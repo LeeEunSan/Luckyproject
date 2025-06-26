@@ -2,6 +2,8 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using MoreMountains.Feedbacks;
+using System.Collections.Generic;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -21,9 +23,6 @@ public class UIManager : MonoBehaviour
 
     [Header("Spawn 카운트 슬라이더")]
     public Slider spawnSlider;
-
-    [Header("Game Over Panel Name (Feel)")]
-    public GameObject GameOverPanel;
 
     [Header("영웅 정보 창")]
     [SerializeField] private GameObject heroInfoPanel;
@@ -52,6 +51,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button legendaryBtn1;
     [SerializeField] private Button legendaryBtn2;
 
+    [Header("특별 몬스터 소환")]
+    [SerializeField] private Button specialSpawnBtn;
+
+    [SerializeField] private TextMeshProUGUI waveStartText; // 새로 연결할 텍스트 오브젝트
+    [SerializeField] private MMF_Player WaveStartFB;
+
     [Header("강화 버튼")]
     [SerializeField] private Button commonRareBtn;
     [SerializeField] private Button heroBtn;
@@ -73,6 +78,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI probRareText;
     [SerializeField] private TextMeshProUGUI probEpicText;
     [SerializeField] private TextMeshProUGUI probLegendText;
+
+    [Header("보스 무료 가차 패널")]
+    [SerializeField] private GameObject freeSummonPanel;
+    [SerializeField] private TextMeshProUGUI freeCountdownText;
+    [SerializeField] private Button freeRareBtn, freeEpicBtn, freeLegendBtn;
+
+    private bool freeSummonSelected = false;
+    private Coroutine freeSummonRoutine;
 
     // 현재 화면에 띄운 데이터 체크용
     private HeroData currentInfoData;
@@ -122,6 +135,13 @@ public class UIManager : MonoBehaviour
 
         // 초기 강화 UI 렌더
         UpdateEnhancementUI();
+
+        // 특별 소환 버튼 초기 리스너 & 숨김
+        if (specialSpawnBtn != null)
+        {
+            specialSpawnBtn.onClick.AddListener(() => WaveManager.Instance.SpawnSpecialEnemy());
+            specialSpawnBtn.gameObject.SetActive(false);
+        }
     }
 
     // 현재 웨이브를 보여줍니다.
@@ -230,13 +250,6 @@ public class UIManager : MonoBehaviour
         currentInfoData = null;
     }
 
-    // 게임 오버 UI를 띄웁니다.
-    public void ShowGameOver(string reason)
-    {
-        //Debug.Log($"[UIManager] Game Over: {reason}");
-        GameOverPanel.SetActive(true);
-    }
-
     public void HeroMaxCount(int count, int countMax)
     {
         HeroCount.text = $"{count} / {countMax}";
@@ -279,7 +292,7 @@ public class UIManager : MonoBehaviour
 
         // 레벨 텍스트 (Max 레벨일 때 "Max" 표시)
         const int MaxLevel = 12; // EnhancementManager의 MaxLevel과 동일하게 설정
-        
+
         commonRareLvText.text = crLv >= MaxLevel ? "Max" : $"Lv.{crLv}";
         heroLvText.text = hLv >= MaxLevel ? "Max" : $"Lv.{hLv}";
         legendLvText.text = lLv >= MaxLevel ? "Max" : $"Lv.{lLv}";
@@ -302,5 +315,88 @@ public class UIManager : MonoBehaviour
         probRareText.text = $"{probs[1]:0.##}%";
         probEpicText.text = $"{probs[2]:0.##}%";
         probLegendText.text = $"{probs[3]:0.##}%";
+    }
+
+    // 6,11,16 웨이브에만 보여 줍니다.
+    public void ShowSpecialSpawnButton()
+    {
+        if (specialSpawnBtn != null)
+            specialSpawnBtn.gameObject.SetActive(true);
+    }
+
+    // 그 외 웨이브엔 숨깁니다.
+    public void HideSpecialSpawnButton()
+    {
+        if (specialSpawnBtn != null)
+            specialSpawnBtn.gameObject.SetActive(false);
+    }
+
+    // WaveManager.Start()에서 호출: 특별 소환 버튼의 초기 상태를 세팅합니다.
+    public void InitializeSpecialSpawnButton()
+    {
+        //명시적으로 한 번 더 초기화
+        HideSpecialSpawnButton();
+    }
+
+    public void ShowWaveStartBanner(int waveNum, float duration)
+    {
+        if (waveStartText == null) return;
+        WaveStartFB.PlayFeedbacks();
+        StopCoroutine("WaveStartCoroutine");
+        StartCoroutine(WaveStartCoroutine(waveNum, duration));
+    }
+
+    private IEnumerator WaveStartCoroutine(int waveNum, float duration)
+    {
+        WaveStartFB.PlayFeedbacks();
+        waveStartText.text = $"WAVE {waveNum}";
+        waveStartText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(duration);
+        waveStartText.gameObject.SetActive(false);
+    }
+    
+    public void ShowFreeSummonPanel(int seconds)
+{
+    if (freeSummonPanel == null) return;
+    freeSummonPanel.SetActive(true);
+    freeSummonSelected = false;
+    // 버튼 리스너 (한 번만)
+    freeRareBtn.onClick.RemoveAllListeners();
+    freeEpicBtn.onClick.RemoveAllListeners();
+    freeLegendBtn.onClick.RemoveAllListeners();
+    freeRareBtn.onClick.AddListener(() => OnFreeSummonChosen(HeroRarity.Rare));
+    freeEpicBtn.onClick.AddListener(() => OnFreeSummonChosen(HeroRarity.Epic));
+    freeLegendBtn.onClick.AddListener(() => OnFreeSummonChosen(HeroRarity.Legendary));
+    // 카운트다운 시작
+    if (freeSummonRoutine != null) StopCoroutine(freeSummonRoutine);
+    freeSummonRoutine = StartCoroutine(FreeSummonCountdown(seconds));
+}
+
+    private IEnumerator FreeSummonCountdown(int seconds)
+    {
+        int remaining = seconds;
+        while (remaining > 0 && !freeSummonSelected)
+        {
+            freeCountdownText.text = $"{remaining--}s";
+            yield return new WaitForSeconds(1f);
+        }
+        if (!freeSummonSelected)
+            OnFreeSummonChosen(HeroRarity.Rare);
+    }
+
+    private void OnFreeSummonChosen(HeroRarity rarity)
+    {
+        if (freeSummonSelected) return;
+        freeSummonSelected = true;
+        SummonManager.Instance.FreeSummonByRarity(rarity);
+        HideFreeSummonPanel();
+    }
+
+    public void HideFreeSummonPanel()
+    {
+        if (freeSummonPanel != null)
+            freeSummonPanel.SetActive(false);
+        if (freeSummonRoutine != null)
+            StopCoroutine(freeSummonRoutine);
     }
 }

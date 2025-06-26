@@ -183,7 +183,7 @@ public class EnhancementManager : MonoBehaviour
 
         // 기본 배율 1.0에서 시작하여 누적 계산
         float totalMultiplier = 1f;
-        
+
         // 현재 레벨-1까지의 모든 강화 수치를 누적
         for (int i = 0; i < level - 1 && i < enhancementArray.Length; i++)
         {
@@ -192,7 +192,7 @@ public class EnhancementManager : MonoBehaviour
 
         // 디버그 로그 추가
         //Debug.Log($"누적 데미지 배율 계산: {rarity} Lv{level} = {totalMultiplier:F2}배");
-        
+
         return totalMultiplier;
     }
 
@@ -208,5 +208,14 @@ public class EnhancementManager : MonoBehaviour
         probabilityLevel = 1;
         UIManager.Instance.UpdateEnhancementUI();
         //Debug.Log("강화 레벨이 초기화되었습니다.");
+    }
+    
+    // ❺ 코인 보상용
+    public void AddCoins(int amount)
+    {
+        currentCoins += amount;
+        // 코인 UI 두 곳 모두 업데이트
+        UIManager.Instance.UpdateCoinUI(currentCoins);
+        UIManager.Instance.UpdateCoinUI_1(currentCoins);
     }
 }

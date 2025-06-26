@@ -63,9 +63,13 @@ public class HeroSlot : MonoBehaviour
     // 현재 Count에 따라 Merge 버튼 보이기/숨기기
     public void UpdateMergeButtonVisibility()
     {
-        if (canvas != null)
-            canvas.gameObject.SetActive(true);
+        // if (canvas != null)
+        //     canvas.gameObject.SetActive(true);
 
+        // if (mergeButton != null)
+        //     mergeButton.gameObject.SetActive(CurrentHero != null && CurrentHero.Count >= 3);
+
+        // 캔버스는 HeroAttackController.ToggleUI() 만으로 제어하니 여기서는 제거
         if (mergeButton != null)
             mergeButton.gameObject.SetActive(CurrentHero != null && CurrentHero.Count >= 3);
     }

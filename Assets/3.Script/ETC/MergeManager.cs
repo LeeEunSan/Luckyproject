@@ -75,46 +75,11 @@ public class MergeManager : MonoBehaviour
 
         var newHero = go.GetComponent<HeroController>();
         newHero.Initialize(newData);
+        // 반드시 AttackController도 초기화
+        var atkCtrl = go.GetComponent<HeroAttackController>();
+        if (atkCtrl != null)
+            atkCtrl.Initialize(newData);
         slot.SetHero(newHero);
-
-        // var oldHero = slot.CurrentHero;
-        // if (oldHero == null || oldHero.Count < 3)
-        //     return;
-
-        // // ── (A) 인구 -2 처리 ───────────────────────
-        // SummonManager.Instance.ChangePopulation(-2);
-
-        // // ── (B) 기존 컨테이너(3개 모델) 삭제 ─────────
-        // slot.ClearHero();
-
-        // // ── (C) 다음 등급 결정 & 신화 분기 ────────────
-        // HeroRarity nextRarity;
-        // if (oldHero.Rarity == HeroRarity.Legendary)
-        // {
-        //     SpawnMythic(slot, oldHero.HeroType);
-        //     return;
-        // }
-        // else
-        // {
-        //     nextRarity = (HeroRarity)((int)oldHero.Rarity + 1);
-        // }
-
-        // // ── (D) 새 등급 랜덤 Instantiate ─────────────
-        // var candidates = heroDatas
-        //     .Where(d => d.rarity == nextRarity && d.heroType == oldHero.HeroType)
-        //     .ToArray();
-
-        // var newData = candidates[Random.Range(0, candidates.Length)];
-        // var go = Instantiate(
-        //     newData.prefab,
-        //     slot.SpawnPoint.position,
-        //     Quaternion.identity,
-        //     slot.SpawnPoint
-        // );
-
-        // var newHero = go.GetComponent<HeroController>();
-        // newHero.Initialize(newData);
-        // slot.SetHero(newHero);
     }
 
     // Legendary → Mythic 전용 커스텀 소환 로직

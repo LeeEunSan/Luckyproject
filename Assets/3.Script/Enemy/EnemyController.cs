@@ -20,10 +20,10 @@ public class EnemyController : MonoBehaviour
     private bool isDead = false; // 중복 사망 처리 방지
 
     // 초기 세팅: EnemyData로부터 체력 세팅, 컴포넌트 바인딩
-    public void Initialize(EnemyData data)
+    public void Initialize(EnemyData data, float hpMultiplier = 1f)
     {
         Data = data;
-        CurrentHp = data.maxHp;
+        CurrentHp = data.maxHp * hpMultiplier;
         isDead = false;
 
         // 컴포넌트 바인딩
@@ -34,7 +34,7 @@ public class EnemyController : MonoBehaviour
         // 체력바 초기 세팅
         if (healthBar != null)
         {
-            healthBar.maxValue = Data.maxHp;
+            healthBar.maxValue = Data.maxHp * hpMultiplier;
             healthBar.value = CurrentHp;
         }
     }
@@ -70,9 +70,22 @@ public class EnemyController : MonoBehaviour
 
         // WaveManager에 사망 알림
         if (WaveManager.Instance != null)
-        {
             WaveManager.Instance.OnMonsterDied();
-        }
+
+        // 등급별 보상
+    switch (gameObject.tag)
+    {
+        case "Enemy":
+            EnhancementManager.Instance.AddCoins(1);
+            break;
+        case "BossEnemy":
+            // 보스 처치 시 10초 무료 가차 선택판 호출
+            UIManager.Instance.ShowFreeSummonPanel(10);
+            break;
+        case "SpecialEnemy":
+            SummonManager.Instance.AddDiamonds(4);
+            break;
+    }
         
         // 이동 정지
         if (mover != null)

@@ -49,7 +49,7 @@ public class SummonManager : MonoBehaviour
         // 2) 랜덤 등급 결정 (누적 확률 방식)
         float r = Random.value * 100f;
         HeroRarity chosenRarity;
-        
+
         if (r <= pCommon)
             chosenRarity = HeroRarity.Common;
         else if (r <= pCommon + pRare)
@@ -59,7 +59,7 @@ public class SummonManager : MonoBehaviour
         else
             chosenRarity = HeroRarity.Legendary;
 
-        Debug.Log($"소환 확률 적용: {r:F2}% → {chosenRarity} (C:{pCommon:F2}% R:{pRare:F2}% E:{pEpic:F2}% L:{pLegendary:F2}%)");
+        //Debug.Log($"소환 확률 적용: {r:F2}% → {chosenRarity} (C:{pCommon:F2}% R:{pRare:F2}% E:{pEpic:F2}% L:{pLegendary:F2}%)");
 
         // 3) 해당 등급 HeroData 풀에서 랜덤 선택
         var pool = heroDatas.Where(d => d.rarity == chosenRarity).ToArray();
@@ -197,4 +197,27 @@ public class SummonManager : MonoBehaviour
     public void SummonRare() => TryGacha(HeroRarity.Rare, 60f, 1);
     public void SummonEpic() => TryGacha(HeroRarity.Epic, 20f, 1);
     public void SummonLegendary() => TryGacha(HeroRarity.Legendary, 10f, 2);
+
+    // 무료 가차: 비용 없이 60%/20%/10% 확률로 소환
+    public void FreeSummon()
+    {
+        float roll = Random.value * 100f;
+        if (roll < 60f) SummonByRarity(HeroRarity.Rare);
+        else if (roll < 80f) SummonByRarity(HeroRarity.Epic);
+        else if (roll < 90f) SummonByRarity(HeroRarity.Legendary);
+        else UIManager.Instance.ShowSummonFailed();
+    }
+
+    // 보석 보상용
+    public void AddDiamonds(int amount)
+    {
+        currentDiamonds += amount;
+        UIManager.Instance.UpdateDiamondUI(currentDiamonds);
+    }
+    
+    // 특정 등급으로 무료 소환
+    public void FreeSummonByRarity(HeroRarity rarity)
+    {
+        SummonByRarity(rarity);
+    }
 }
